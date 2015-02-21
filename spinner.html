@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>GreenSock: TimelineMax In Action</title>
+
+<style>
+html,
+body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  color: #fff;
+  font-family: monospace;
+  font-size: 1.5em;
+  text-align: center;
+  -webkit-perspective: 500px;
+}
+
+.output {
+  display: block;
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  margin: -300px auto 0;
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: 400px;
+  height: 400px;
+  margin: -200px 0 0 -200px;
+  cursor: pointer;
+  visibility: hidden;
+}
+
+.spinner_marker {
+  position: relative;
+  top: -10px;
+  z-index: 2;
+  float: left; /* Used to take this out of the document flow. */
+  width: 100%;
+  text-shadow: 0 0 4px #000;
+}
+
+.spinner_marker:before {
+  content: '▼';
+}
+
+.spinner_body {
+  position: relative;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border: 200px solid transparent;
+  border-top-color: red;
+  border-right-color: yellow;
+  border-bottom-color: green;
+  border-left-color: blue;
+  border-radius: 100%;
+}
+
+</style>
+</head>
+
+<body>
+
+<p class="output">Click the wheel to spin.</p>
+
+<div class="spinner">
+  <div class="spinner_marker"></div>
+  <div class="spinner_body"></div>
+</div>
+
+<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/easing/EasePack.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+
+<script>
+
+$(window).load(function() {
+
+  var $spinner = $('.spinner'),
+      $spinner_body = $('.spinner_body'),
+      $output = $('.output'),
+      timeline,
+      introTween,
+      stopTween,
+      spinRepeatTween,
+      stoppedAngle = 0,
+      winningColor;
+
+  function startSpinning() {
+    // Keep track of the spinner state so that we know what to do when someone
+    // clicks on it.
+    $spinner_body.addClass('is-spinning');
+    // Build the tweens.
+    introTween = TweenMax.to( $spinner_body, 1.5, {
+      rotation: '+=540',
+      ease: Power1.easeIn,
+      overwrite: 'none'
+    });
+    spinRepeatTween = TweenMax.to( $spinner_body, 0.5, {
+      rotation: '+=360',
+      repeat: -1,
+      ease: Linear.easeNone,
+      overwrite: 'none'
+    });
+    // Add the tweens to the timeline.
+    timeline = new TimelineMax();
+    timeline.add( introTween ).add( spinRepeatTween );
+  }
+
+  function stopSpinning() {
+    // Update the spinner state.
+    $spinner_body.removeClass('is-spinning');
+    // Build the tweens.
+    stopTween = TweenMax.to( $spinner_body, 1.5, {
+      rotation: '+=540',
+      ease: Power1.easeOut,
+      overwrite: 'all',
+      onComplete: onSpinnerStopped
+    });
+    // Add the tweens to the timeline.
+    timeline = new TimelineMax();
+    timeline.add( stopTween );
+  }
+
+  function onSpinnerClick() {
+    if ( $spinner_body.hasClass('is-spinning') ) {
+      stopSpinning();
+      $output.html( 'Which color will win?' );
+    } else {
+      startSpinning();
+      $output.html( 'When you\'re feeling lucky, click the wheel to stop.' );
+    }
+  }
+
+  function onSpinnerStopped() {
+    console.log(stopTween._targets[0]._gsTransform.rotation);
+    stoppedAngle = radiansToDegrees( stopTween._targets[0]._gsTransform.rotation );
+    winningColor = getWinnerFromAngle( stoppedAngle );
+    $output.html( winningColor + ' wins!<br>(angle: ' + stoppedAngle + ')' );
+  }
+
+  function radiansToDegrees( radians ) {
+    // http://css-tricks.com/get-value-of-css-rotation-through-javascript/
+    return radians * ( 180 / Math.PI ) % 360;
+  }
+
+  function getWinnerFromAngle( angle ) {
+    var winner;
+    if ( angle >= 315 || angle < 45 ) {
+      winner = 'Red';
+    }
+    if ( angle >= 45 && angle < 135 ) {
+      winner = 'Blue';
+    }
+    if ( angle >= 135 && angle < 225 ) {
+      winner = 'Green';
+    }
+    if ( angle >= 225 && angle < 315 ) {
+      winner = 'Yellow';
+    }
+    return winner;
+  }
+
+  $spinner.click( onSpinnerClick );
+
+  TweenMax.from( $spinner, 1, {
+    opacity: 0,
+    top: window.outerHeight + 200,
+    ease: Bounce.easeOut
+  });
+
+  // Show the spinner after DOM is ready.
+  TweenLite.set( $spinner, { visibility: 'visible' } );
+
+});
+
+</script>
+</body>
+</html>
