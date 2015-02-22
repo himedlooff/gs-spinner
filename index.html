@@ -152,15 +152,17 @@ $(window).load(function() {
     // clicks on it.
     $spinnerBody.addClass('is-spinning');
     // Build the tweens.
-    startTween = TweenMax.to( $spinnerBody, 1.5, {
-      rotation: '+=540',
-      ease: Power1.easeIn,
+    startTween = TweenMax.to( $spinnerBody, .75, {
+      rotation: '+=180',
+      ease: Back.easeIn,
+      force3D: true,
       overwrite: 'none'
     });
-    spinRepeatTween = TweenMax.to( $spinnerBody, 0.5, {
+    spinRepeatTween = TweenMax.to( $spinnerBody, 0.4, {
       rotation: '+=360',
       repeat: -1,
       ease: Linear.easeNone,
+      force3D: true,
       overwrite: 'none'
     });
     // Add the tweens to the timeline.
@@ -190,6 +192,7 @@ $(window).load(function() {
     stopTween = TweenMax.to( $spinnerBody, targetDuration, {
       rotation: targetAngle,
       ease: Power1.easeOut,
+      force3D: true,
       overwrite: 'all',
       onComplete: onSpinnerStopped
     });
@@ -249,7 +252,8 @@ $(window).load(function() {
   TweenMax.from( $spinner, 1, {
     opacity: 0,
     top: window.outerHeight + 200,
-    ease: Bounce.easeOut
+    ease: Power4.easeOut,
+    force3D: true
   });
 
   // Show the spinner now that the DOM is ready.
