@@ -76,11 +76,11 @@ body {
   <div class="spinner_body"></div>
 </div>
 
-<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/easing/EasePack.min.js"></script>
-<script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/easing/EasePack.min.js"></script>
+<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
 
-<script>
+<script type="text/javascript">
 
 $(window).load(function() {
 
@@ -141,15 +141,9 @@ $(window).load(function() {
   }
 
   function onSpinnerStopped() {
-    console.log(stopTween._targets[0]._gsTransform.rotation);
-    stoppedAngle = radiansToDegrees( stopTween._targets[0]._gsTransform.rotation );
+    stoppedAngle = stopTween._targets[0]._gsTransform.rotation % 360;
     winningColor = getWinnerFromAngle( stoppedAngle );
-    $output.html( winningColor + ' wins!<br>(angle: ' + stoppedAngle + ')' );
-  }
-
-  function radiansToDegrees( radians ) {
-    // http://css-tricks.com/get-value-of-css-rotation-through-javascript/
-    return radians * ( 180 / Math.PI ) % 360;
+    $output.html( winningColor + ' wins!<br>(angle: ' + stoppedAngle + '°)' );
   }
 
   function getWinnerFromAngle( angle ) {
@@ -177,8 +171,8 @@ $(window).load(function() {
     ease: Bounce.easeOut
   });
 
-  // Show the spinner after DOM is ready.
-  TweenLite.set( $spinner, { visibility: 'visible' } );
+  // Show the spinner now that the DOM is ready.
+  $spinner.css( 'visibility', 'visible' );
 
 });
 
