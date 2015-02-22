@@ -5,11 +5,16 @@
 <title>GreenSock: TimelineMax In Action</title>
 
 <style>
+
 html,
 body {
-  position: relative;
-  width: 100%;
   height: 100%;
+}
+
+body {
+  position: relative;
+  margin: 0;
+  padding: 1em;
   background-color: #000;
   color: #fff;
   font-family: monospace;
@@ -18,12 +23,32 @@ body {
   -webkit-perspective: 500px;
 }
 
+.btn {
+  display: inline-block;
+  margin-right: -0.25em;
+  padding: 1em;
+  background: #fff;
+  border: 0;
+  font-size: .25em;
+  font-family: monospace;
+  cursor: pointer;
+}
+
 .output {
   display: block;
-  position: absolute;
+  position: relative;
   top: 50%;
   width: 100%;
-  margin: -300px auto 0;
+  margin: -350px auto 0;
+}
+
+.output_text {
+  line-height: 1.25;
+}
+
+.output_btns {
+  margin-top: 1em;
+  display: none;
 }
 
 .spinner {
@@ -69,7 +94,17 @@ body {
 
 <body>
 
-<p class="output">Click the wheel to spin.</p>
+<div class="output">
+  <div class="output_text">
+    Click the wheel<br>to spin
+  </div>
+  <div class="output_btns">
+    <button class="btn" data-angle="0" type="button">Stop on red</button>
+    <button class="btn" data-angle="90" type="button">Stop on blue</button>
+    <button class="btn" data-angle="180" type="button">Stop on green</button>
+    <button class="btn" data-angle="270" type="button">Stop on yellow</button>
+  </div>
+</div>
 
 <div class="spinner">
   <div class="spinner_marker"></div>
@@ -85,26 +120,27 @@ body {
 $(window).load(function() {
 
   var $spinner = $('.spinner'),
-      $spinner_body = $('.spinner_body'),
-      $output = $('.output'),
+      $spinnerBody = $('.spinner_body'),
+      $outputText = $('.output_text'),
+      $outputBtns = $('.output_btns'),
+      $btns = $('[data-angle]'),
       timeline,
-      introTween,
+      startTween,
       stopTween,
       spinRepeatTween,
-      stoppedAngle = 0,
       winningColor;
 
   function startSpinning() {
     // Keep track of the spinner state so that we know what to do when someone
     // clicks on it.
-    $spinner_body.addClass('is-spinning');
+    $spinnerBody.addClass('is-spinning');
     // Build the tweens.
-    introTween = TweenMax.to( $spinner_body, 1.5, {
+    startTween = TweenMax.to( $spinnerBody, 1.5, {
       rotation: '+=540',
       ease: Power1.easeIn,
       overwrite: 'none'
     });
-    spinRepeatTween = TweenMax.to( $spinner_body, 0.5, {
+    spinRepeatTween = TweenMax.to( $spinnerBody, 0.5, {
       rotation: '+=360',
       repeat: -1,
       ease: Linear.easeNone,
@@ -112,15 +148,30 @@ $(window).load(function() {
     });
     // Add the tweens to the timeline.
     timeline = new TimelineMax();
-    timeline.add( introTween ).add( spinRepeatTween );
+    timeline.add( startTween ).add( spinRepeatTween );
+    // Update the output text.
+    $outputBtns.show();
+    $outputText.html( 'When you\'re feeling lucky, click the wheel.<br>Or use the buttons to stop at a predetermined location.' );
   }
 
-  function stopSpinning() {
+  function stopSpinning( angle ) {
+    // Calculate how to smoothly transition to the target angle.
+    var targetAngle,
+        targetDuration;
+    if ( typeof angle !== 'undefined' ) {
+      targetAngle = (360 - getCurrentAngle()) + angle + 360;
+      targetAngle = '+=' + targetAngle;
+      targetDuration = targetAngle.replace('+=', '') / 360;
+    } else {
+      // Defaults if there is no angle argument.
+      targetAngle = '+=540';
+      targetDuration = 1.5;
+    }
     // Update the spinner state.
-    $spinner_body.removeClass('is-spinning');
+    $spinnerBody.removeClass('is-spinning');
     // Build the tweens.
-    stopTween = TweenMax.to( $spinner_body, 1.5, {
-      rotation: '+=540',
+    stopTween = TweenMax.to( $spinnerBody, targetDuration, {
+      rotation: targetAngle,
       ease: Power1.easeOut,
       overwrite: 'all',
       onComplete: onSpinnerStopped
@@ -128,22 +179,30 @@ $(window).load(function() {
     // Add the tweens to the timeline.
     timeline = new TimelineMax();
     timeline.add( stopTween );
+    // Update the output text.
+    $outputBtns.hide();
+    $outputText.html( 'Which color will win?' );
   }
 
   function onSpinnerClick() {
-    if ( $spinner_body.hasClass('is-spinning') ) {
+    if ( $spinnerBody.hasClass('is-spinning') ) {
       stopSpinning();
-      $output.html( 'Which color will win?' );
     } else {
       startSpinning();
-      $output.html( 'When you\'re feeling lucky, click the wheel to stop.' );
     }
   }
 
   function onSpinnerStopped() {
-    stoppedAngle = stopTween._targets[0]._gsTransform.rotation % 360;
-    winningColor = getWinnerFromAngle( stoppedAngle );
-    $output.html( winningColor + ' wins!<br>(angle: ' + stoppedAngle + '°)' );
+    winningColor = getWinnerFromAngle( getCurrentAngle() );
+    $outputText.html( winningColor + ' wins!<br>Final angle: ' + getCurrentAngle() + '°<br>Click the wheel to spin again.' );
+  }
+
+  function getCurrentAngle() {
+    if ( $spinnerBody.hasClass('is-spinning') ) {
+      return startTween._targets[0]._gsTransform.rotation % 360;
+    } else {
+      return stopTween._targets[0]._gsTransform.rotation % 360;
+    }
   }
 
   function getWinnerFromAngle( angle ) {
@@ -165,6 +224,11 @@ $(window).load(function() {
 
   $spinner.click( onSpinnerClick );
 
+  $btns.click(function(){
+    stopSpinning( $( this ).data('angle') );
+  });
+
+  // Intro animation.
   TweenMax.from( $spinner, 1, {
     opacity: 0,
     top: window.outerHeight + 200,
